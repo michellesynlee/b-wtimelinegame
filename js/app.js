@@ -422,7 +422,7 @@ function placeCardOnTimeline(eventId, zone) {
 
   if (placedEvents.length === targetSequence.length) {
     stopTimer();
-    setTimeout(() => {
+    setTimeout(async () => {
       lastFinalTime = timeElapsed;
       endTimeElement.textContent = `${lastFinalTime.toFixed(1)}s`;
 
@@ -437,7 +437,7 @@ function placeCardOnTimeline(eventId, zone) {
         : '<p class="no-articles">No related articles for this round.</p>';
 
       // Update leaderboard
-      saveToLeaderboard(playerName || 'Anonymous', lastFinalTime);
+      await saveToLeaderboard(playerName || 'Anonymous', lastFinalTime);
 
       // Reset to articles view
       endArticlesPanel.classList.remove('hidden');
@@ -452,35 +452,60 @@ function placeCardOnTimeline(eventId, zone) {
 
 
 
-function saveToLeaderboard(name, time) {
+const SUPABASE_URL = 'https://dviqujvqvfqwqwetpycv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aXF1anZxdmZxd3F3ZXRweWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MjU3MjIsImV4cCI6MjA5MTUwMTcyMn0.0w-hkSzhsIESL3BPRUr6IqWHMf7mea_0ngECaqjXn2M';
+
+function sbHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+async function saveToLeaderboard(name, time) {
   try {
-    const stored = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-    stored.push({ name, time });
-    stored.sort((a, b) => a.time - b.time);
-    const top10 = stored.slice(0, 10);
-    localStorage.setItem('leaderboard', JSON.stringify(top10));
-    console.log('[LEADERBOARD] Saved. Current board:', top10);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+      method: 'POST',
+      headers: sbHeaders(),
+      body: JSON.stringify({ name, time }),
+    });
+    if (!res.ok) {
+      console.warn('[LEADERBOARD] Save failed:', await res.text());
+    } else {
+      console.log('[LEADERBOARD] Saved:', name, time);
+    }
   } catch (e) {
-    console.warn('[LEADERBOARD] Could not save to localStorage:', e);
+    console.warn('[LEADERBOARD] Network error saving:', e);
   }
 }
 
-function renderLeaderboard(currentTime) {
-  const stored = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-  if (stored.length === 0) {
-    leaderboardList.innerHTML = '<li style="border:none;background:none;color:#888;font-style:italic;">No scores yet.</li>';
-    return;
+async function renderLeaderboard(currentTime) {
+  leaderboardList.innerHTML = '<li style="border:none;background:none;color:#888;font-style:italic;">Loading...</li>';
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,time&order=time.asc&limit=10`,
+      { headers: sbHeaders() }
+    );
+    const data = await res.json();
+    if (!data.length) {
+      leaderboardList.innerHTML = '<li style="border:none;background:none;color:#888;font-style:italic;">No scores yet.</li>';
+      return;
+    }
+    leaderboardList.innerHTML = data.map((entry, i) => {
+      const isYou = entry.time === currentTime && entry.name === (playerName || 'Anonymous');
+      return `
+        <li class="${isYou ? 'leaderboard-you' : ''}">
+          <span class="lb-rank">${i + 1}.</span>
+          <span class="lb-name">${entry.name}${isYou ? ' (you)' : ''}</span>
+          <span class="lb-time">${entry.time.toFixed(1)}s</span>
+        </li>
+      `;
+    }).join('');
+  } catch (e) {
+    leaderboardList.innerHTML = '<li style="border:none;background:none;color:#888;font-style:italic;">Could not load scores.</li>';
+    console.warn('[LEADERBOARD] Network error loading:', e);
   }
-  leaderboardList.innerHTML = stored.map((entry, i) => {
-    const isYou = entry.time === currentTime && entry.name === (playerName || 'Anonymous');
-    return `
-      <li class="${isYou ? 'leaderboard-you' : ''}">
-        <span class="lb-rank">${i + 1}.</span>
-        <span class="lb-name">${entry.name}${isYou ? ' (you)' : ''}</span>
-        <span class="lb-time">${entry.time.toFixed(1)}s</span>
-      </li>
-    `;
-  }).join('');
 }
 
 viewLeaderboardButton.addEventListener('click', () => {
