@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Blue and When</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="game-page">
+
+    <div id="launch-overlay" class="launch-overlay">
+      <div class="launch-card">
+        <p class="launch-label">ready?</p>
+        <label class="launch-name-label" for="player-name"> enter a name... top 10 scores make the leaderboard </label>
+        <input id="player-name" class="launch-name-input" type="text" placeholder="your name" maxlength="30" />
+        <button id="launch-button" class="primary-button">start</button>
+      </div>
+    </div>
+
+    <div id="end-overlay" class="end-overlay hidden">
+      <div class="end-card">
+        <div class="end-header">results</div>
+        <div class="end-body">
+          <div class="end-result">
+            <img src="images/congrats.png" alt="Congrats!" class="end-congrats-img" />
+            <p class="end-time" id="end-time">0.0s</p>
+            <div class="end-actions">
+              <img src="images/tryagain.png" alt="Try Again" class="end-action-img" id="try-again-button" />
+              <img src="images/viewleaderboard.png" alt="View Leaderboard" class="end-action-img" id="view-leaderboard-button" />
+            </div>
+          </div>
+          <div class="end-right-panel">
+            <div id="end-articles-panel">
+              <img src="images/viewrelatedarticles.png" alt="View Related Articles" class="articles-title-img" />
+              <div id="article-links"></div>
+            </div>
+            <div id="end-leaderboard-panel" class="hidden">
+              <p class="articles-title">Leaderboard</p>
+              <ol id="leaderboard-list"></ol>
+              <button id="back-to-articles-btn" class="back-btn">← back to articles</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="game-navbar">
+      <button id="restart-button" class="nav-btn">restart</button>
+      <a href="index.html" class="nav-title"> ꧁ the blue & when ꧂</a>
+      <div class="nav-right">
+        <div class="help-wrapper">
+          <button id="help-button" class="nav-btn">how to play</button>
+          <div class="help-tooltip">
+            Drop the first card anywhere to start. 
+            Then use the <em>earlier</em>, <em>later</em>, and <em>between</em> 
+            zones to place each card in the correct order. The date reveals after a correct placement.
+          </div>
+        </div>
+        <div class="help-wrapper">
+          <button class="nav-btn">about</button>
+          <div class="help-tooltip">
+            <em>The Blue &amp; When</em> is a timeline trivia game created by 
+            <a href="https://www.theblueandwhite.org" target="_blank" rel="noopener noreferrer">The Blue &amp; White</a>, 
+            Columbia University's undergraduate magazine. Test your knowledge of Columbia history by sorting 
+            real campus events into the correct order. Inspired by the LA Times game <em>Timestack</em>.
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="game-shell">
+      <div class="game-meta">
+        <span id="timer">0.0s</span>
+        <span id="progress-count">0 / 10</span>
+      </div>
+
+      <section class="timeline-area">
+        <div class="timeline-line"></div>
+        <div id="drop-row" class="timeline-drop-row"></div>
+        <div class="placed-cards" id="placed-cards"></div>
+      </section>
+
+      <section class="card-row" id="active-cards"></section>
+    </main>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
