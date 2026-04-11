@@ -230,7 +230,6 @@ function renderActiveCards() {
     `;
 
     card.addEventListener('dragstart', (e) => {
-      console.log('[DRAG] dragstart on', event.shortTitle);
       isDragging = true;
       e.dataTransfer.setData('text/plain', event.id);
       e.dataTransfer.effectAllowed = 'move';
@@ -238,9 +237,79 @@ function renderActiveCards() {
     });
 
     card.addEventListener('dragend', () => {
-      console.log('[DRAG] dragend on', event.shortTitle);
       isDragging = false;
       card.classList.remove('dragging');
+    });
+
+    // Touch support
+    let touchClone = null;
+    let lastTouchedZone = null;
+
+    card.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      card.classList.add('dragging');
+
+      // Create a floating clone to follow the finger
+      touchClone = card.cloneNode(true);
+      touchClone.style.position = 'fixed';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.opacity = '0.85';
+      touchClone.style.zIndex = '9999';
+      touchClone.style.width = card.offsetWidth + 'px';
+      touchClone.style.height = card.offsetHeight + 'px';
+      touchClone.style.margin = '0';
+      document.body.appendChild(touchClone);
+
+      const touch = e.touches[0];
+      touchClone.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
+      touchClone.style.top = (touch.clientY - card.offsetHeight / 2) + 'px';
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+
+      if (touchClone) {
+        touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
+        touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+      }
+
+      // Highlight drop zone under finger
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const zone = el ? el.closest('.drop-zone') : null;
+
+      if (lastTouchedZone && lastTouchedZone !== zone) {
+        lastTouchedZone.classList.remove('drag-over');
+      }
+      if (zone) {
+        zone.classList.add('drag-over');
+      }
+      lastTouchedZone = zone;
+
+      // Auto-scroll timeline
+      const rect = dropRow.getBoundingClientRect();
+      const edgeZone = 80;
+      if (touch.clientX < rect.left + edgeZone) {
+        dropRow.scrollLeft -= 10;
+      } else if (touch.clientX > rect.right - edgeZone) {
+        dropRow.scrollLeft += 10;
+      }
+    }, { passive: false });
+
+    card.addEventListener('touchend', () => {
+      isDragging = false;
+      card.classList.remove('dragging');
+
+      if (touchClone) {
+        document.body.removeChild(touchClone);
+        touchClone = null;
+      }
+
+      if (lastTouchedZone) {
+        lastTouchedZone.classList.remove('drag-over');
+        placeCardOnTimeline(event.id, lastTouchedZone);
+        lastTouchedZone = null;
+      }
     });
 
     activeCardsContainer.appendChild(card);
@@ -384,11 +453,16 @@ function placeCardOnTimeline(eventId, zone) {
 
 
 function saveToLeaderboard(name, time) {
-  const stored = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-  stored.push({ name, time });
-  stored.sort((a, b) => a.time - b.time);
-  const top10 = stored.slice(0, 10);
-  localStorage.setItem('leaderboard', JSON.stringify(top10));
+  try {
+    const stored = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+    stored.push({ name, time });
+    stored.sort((a, b) => a.time - b.time);
+    const top10 = stored.slice(0, 10);
+    localStorage.setItem('leaderboard', JSON.stringify(top10));
+    console.log('[LEADERBOARD] Saved. Current board:', top10);
+  } catch (e) {
+    console.warn('[LEADERBOARD] Could not save to localStorage:', e);
+  }
 }
 
 function renderLeaderboard(currentTime) {
