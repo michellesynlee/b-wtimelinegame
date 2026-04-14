@@ -103,7 +103,7 @@ function loadTimelineEvents() {
     { id: 'fallback-10', year: 1995, shortTitle: 'Lauryn Hill drops out', title: 'Lauryn Hill drops out of Columbia' },
   ];
 
-  fetch('timelineevents.csv')
+  fetch('csvs/Week of April 19, 2026 - Sheet1.csv')
     .then((response) => response.text())
     .then((text) => {
       allEvents = parseTimelineEvents(text);
@@ -493,11 +493,13 @@ async function renderLeaderboard(currentTime) {
       return;
     }
     leaderboardList.innerHTML = data.map((entry, i) => {
-      const isYou = entry.time === currentTime && entry.name === (playerName || 'Anonymous');
+      const isYou = entry.time.toFixed(1) === currentTime.toFixed(1) && entry.name === (playerName || 'Anonymous');
+      const isFirst = i === 0 && isYou;
+      const classes = [isYou ? 'leaderboard-you' : '', isFirst ? 'leaderboard-first' : ''].filter(Boolean).join(' ');
       return `
-        <li class="${isYou ? 'leaderboard-you' : ''}">
-          <span class="lb-rank">${i + 1}.</span>
-          <span class="lb-name">${entry.name}${isYou ? ' (you)' : ''}</span>
+        <li class="${classes}">
+          <span class="lb-rank">${isFirst ? '🏆' : `${i + 1}.`}</span>
+          <span class="lb-name">${entry.name}${isFirst ? ' — you\'re #1!' : isYou ? ' (you)' : ''}</span>
           <span class="lb-time">${entry.time.toFixed(1)}s</span>
         </li>
       `;

@@ -342,6 +342,12 @@ button {
   font-weight: 700;
 }
 
+#leaderboard-list li.leaderboard-first {
+  background: #fef9e7;
+  border-color: #c8a600;
+  color: #7a5c00;
+}
+
 #leaderboard-list li .lb-rank {
   color: #888;
   font-size: 0.8rem;
